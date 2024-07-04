@@ -42,8 +42,6 @@ team_t team = {
     ""
 };
 
-/* DON'T MODIFY THIS VALUE AND LEAVE IT AS IT WAS */
-static range_t **gl_ranges;
 
 /*
  * Block structure
@@ -134,32 +132,11 @@ static range_t **gl_ranges;
 /* root and nil node of Red-black tree, which will be allocated in heap */
 static void *rb_root, *rb_null;
 
-/* 
- * remove_range - manipulate range lists
- * DON'T MODIFY THIS FUNCTION AND LEAVE IT AS IT WAS
- */
-static void remove_range(range_t **ranges, char *lo)
-{
-    range_t *p;
-    range_t **prevpp = ranges;
-
-    if (!ranges)
-        return;
-
-    for (p = *ranges;  p != NULL; p = p->next) {
-        if (p->lo == lo) {
-            *prevpp = p->next;
-            free(p);
-            break;
-        }
-        prevpp = &(p->next);
-    }
-}
 
 /*
  * mm_init - initialize the malloc package.
  */
-int mm_init(range_t **ranges)
+int mm_init()
 {
     /* allocate root and nil nodes */
     if((rb_root = rb_null = mem_sbrk(4 + MIN_BLOCK_SIZE)) == FAIL) return -1;
@@ -168,9 +145,6 @@ int mm_init(range_t **ranges)
     RB_RED(rb_root) = 0;
     /* prevent coalesce by setting free bit to 0*/
     PREV_SIZE(NEXT_BLOCK(rb_null, MIN_BLOCK_SIZE)) = 0;
-
-    /* DON't MODIFY THIS STAGE AND LEAVE IT AS IT WAS */
-    gl_ranges = ranges;
 
     return 0;
 }
@@ -656,17 +630,28 @@ void mm_free(void *ptr)
     }
 #endif /* CHECK */
 
-    /* DON't MODIFY THIS STAGE AND LEAVE IT AS IT WAS */
-    if (gl_ranges)
-        remove_range(gl_ranges, ptr);
 }
 
 /*
- * mm_realloc - empty implementation; YOU DO NOT NEED TO IMPLEMENT THIS
- */
-void* mm_realloc(void *ptr, size_t t)
+* mm_realloc - naive implementation of mm_realloc
+*/
+void *mm_realloc(void *ptr, size_t size)
 {
-    return NULL;
+	
+	void *newp;
+	size_t copySize;
+	copySize = CUR_SIZE(ptr - HEADER_SIZE);
+	
+	if ((newp = mm_malloc(size)) == NULL) {
+		printf("ERROR: mm_malloc failed in mm_realloc\n");
+		exit(1);
+	}
+	
+	if (size < copySize)
+		copySize = size;
+	memcpy(newp, ptr, copySize);
+	mm_free(ptr);
+	return newp;
 }
 
 /*

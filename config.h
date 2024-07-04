@@ -12,7 +12,7 @@
  * This is the default path where the driver will look for the
  * default tracefiles. You can override it at runtime with the -t flag.
  */
-#define TRACEDIR "./"
+#define TRACEDIR "./traces/"
 
 /*
  * This is the list of default tracefiles in TRACEDIR that the driver
@@ -21,29 +21,18 @@
  * your students to implement realloc, you can delete the last two
  * traces.
  */
-
-#define CHECK_DOUBLE_FREE 0
-
-#if CHECK_DOUBLE_FREE
-#define DEFAULT_TRACEFILES "double-free.rep"
-#else
 #define DEFAULT_TRACEFILES \
-  "memory-leak.rep",\
-  "short1-bal.rep",\
-  "short2-bal.rep",\
-  "random-bal.rep",\
-  "random2-bal.rep",\
-  "random3-bal.rep",\
-  "random4-bal.rep",\
-  "random5-bal.rep",\
-  "binary-bal.rep",\
-  "binary2-bal.rep", \
   "amptjp-bal.rep",\
   "cccp-bal.rep",\
   "cp-decl-bal.rep",\
   "expr-bal.rep",\
-  "coalescing-bal.rep"
-#endif
+  "coalescing-bal.rep",\
+  "random-bal.rep",\
+  "random2-bal.rep",\
+  "binary-bal.rep",\
+  "binary2-bal.rep",\
+  "realloc-bal.rep",\
+  "realloc2-bal.rep"
 
 /*
  * This constant gives the estimated performance of the libc malloc
@@ -54,7 +43,7 @@
  * to their score.  This deters students from building extremely fast,
  * but extremely stupid malloc packages.
  */
-#define AVG_LIBC_THRUPUT       8000E3  /* 8'000 Kops/sec */
+#define AVG_LIBC_THRUPUT      600E3  /* 600 Kops/sec */
 
  /* 
   * This constant determines the contributions of space utilization
@@ -71,7 +60,7 @@
 /* 
  * Maximum heap size in bytes 
  */
-#define MAX_HEAP (64*(1<<20))  /* 64 MB */
+#define MAX_HEAP (20*(1<<20))  /* 20 MB */
 
 /*****************************************************************************
  * Set exactly one of these USE_xxx constants to "1" to select a timing method
