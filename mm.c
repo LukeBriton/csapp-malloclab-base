@@ -166,29 +166,6 @@ static void* rb_find(size_t size){
 }
 
 /*
- * rb_find_exact - check whether block is in Red-black tree or not.
- */
-static int rb_find_exact(void *block){
-    void *node = RB_LEFT(rb_root);
-    while(node != rb_null){
-        if(node == block){
-            return 1;
-        }else if(CUR_SIZE_MASKED(node) > CUR_SIZE_MASKED(block)){
-            node = RB_LEFT(node);
-        }else if(CUR_SIZE_MASKED(node) == CUR_SIZE_MASKED(block)){
-            if(node > block){
-                node = RB_LEFT(node);
-            }else{
-                node = RB_RIGHT(node);
-            }
-        }else{
-            node = RB_RIGHT(node);
-        }
-    }
-    return 0;
-}
-
-/*
  * rb_successor - find the next node of node in ascending order.
  */
 static void* rb_successor(void *node){
