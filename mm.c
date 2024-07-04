@@ -492,23 +492,66 @@ void mm_free(void *ptr)
 }
 
 /*
-* mm_realloc - naive implementation of mm_realloc
-*/
-void *mm_realloc(void *ptr, size_t size)
-{
-	
-	void *newp;
-	size_t copySize;
-	copySize = CUR_SIZE(ptr - HEADER_SIZE);
-	
-	if ((newp = mm_malloc(size)) == NULL) {
-		printf("ERROR: mm_malloc failed in mm_realloc\n");
-		exit(1);
-	}
-	
-	if (size < copySize)
-		copySize = size;
-	memcpy(newp, ptr, copySize);
-	mm_free(ptr);
-	return newp;
+ * mm_realloc - Better than the naive implementation,
+ * with higher space utilisation.
+ * Naive: Perf index = 47 (util) + 40 (thru) = 87/100
+ * Optimized: Perf index = 52 (util) + 40 (thru) = 92/100
+ */
+void *mm_realloc(void *ptr, size_t size) {
+    void *new_ptr;
+    size_t copy_size, block_size;
+
+    // If ptr is NULL, realloc should act like malloc
+    if (ptr == NULL) {
+        return mm_malloc(size);
+    }
+
+    // If size is 0, realloc should act like free
+    if (size == 0) {
+        mm_free(ptr);
+        return NULL;
+    }
+
+    block_size = ALIGN(HEADER_SIZE + size);
+    block_size = block_size < MIN_BLOCK_SIZE ? MIN_BLOCK_SIZE : block_size;
+
+    void *cur = ptr - HEADER_SIZE;
+    size_t cur_size = CUR_SIZE_MASKED(cur);
+
+    // If the new size is smaller or equal, we can reuse the same block
+    if (block_size <= cur_size) {
+        // Optionally, we could split the block if the remaining part is large enough
+        return ptr;
+    }
+
+    // Try to coalesce with the next block if it's free and the size is sufficient
+    void *next = NEXT_BLOCK(cur, cur_size);
+    if (next + 4 <= mem_heap_hi() && CUR_FREE(next)) {
+        size_t next_size = CUR_SIZE_MASKED(next);
+        size_t total_size = cur_size + next_size;
+
+        if (total_size >= block_size) {
+            if (IS_IN_RB(next)) {
+                rb_delete(next);
+            }
+
+            CUR_SIZE(cur) = PREV_SIZE(NEXT_BLOCK(next, next_size)) = total_size;
+            return ptr;
+        }
+    }
+
+    // If we can't reuse or coalesce, we need to allocate a new block
+    new_ptr = mm_malloc(size);
+    if (new_ptr == NULL) {
+        return NULL;
+    }
+
+    // Copy the old data to the new block
+    copy_size = cur_size - HEADER_SIZE;
+    memcpy(new_ptr, ptr, copy_size < size ? copy_size : size);
+
+    // Free the old block
+    mm_free(ptr);
+
+    return new_ptr;
 }
