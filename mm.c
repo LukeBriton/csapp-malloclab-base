@@ -653,22 +653,3 @@ void *mm_realloc(void *ptr, size_t size)
 	mm_free(ptr);
 	return newp;
 }
-
-/*
- * mm_exit - finalize the malloc package.
- */
-void mm_exit(void)
-{
-    void *cur, *end;
-
-    cur = mem_heap_lo() + MIN_BLOCK_SIZE;
-    end = mem_heap_hi() - 3;
-    while(cur < end){
-        /* check if there are allocated blocks remaining */
-        if(!CUR_FREE(cur)){
-            printf("memory leak at %p is detected.\n", cur);
-            mm_free(cur + HEADER_SIZE);
-        }
-        cur = NEXT_BLOCK(cur, CUR_SIZE_MASKED(cur));
-    }
-}
