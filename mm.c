@@ -421,95 +421,6 @@ static void rb_insert(void *node){
 }
 
 /*
- * rb_print_preorder_impl - recursion implementation of rb_print_preorder
- */
-static void rb_print_preorder_impl(void *node){
-    if(RB_LEFT(node) != rb_null){
-        rb_print_preorder_impl(RB_LEFT(node));
-    }
-    printf("%p : %u\n", node, CUR_SIZE_MASKED(node));
-    if(RB_RIGHT(node) != rb_null){
-        rb_print_preorder_impl(RB_RIGHT(node));
-    }
-}
-
-/*
- * rb_print_preorder - print nodes of Red-black tree in preorder
- */
-static void rb_print_preorder(){
-    printf("rb_print_preorder() called\n");
-    if(RB_LEFT(rb_root) == rb_null){
-        printf("empty\n");
-    }else{
-        rb_print_preorder_impl(RB_LEFT(rb_root));
-    }
-}
-
-/*
- * rb_check_preorder_impl - recursion implementation of rb_check_preorder
- */
-static int rb_check_preorder_impl(void *node){
-    if(RB_LEFT(node) != rb_null){
-        if(!rb_check_preorder_impl(RB_LEFT(node))){
-            return 0;
-        }
-    }
-    if(!CUR_FREE(node)){
-        printf("%p is in Red-black tree, but is not free block.\n", node);
-        return 0;
-    }
-    if(RB_RIGHT(node) != rb_null){
-        if(!rb_check_preorder_impl(RB_RIGHT(node))){
-            return 0;
-        }
-    }
-    return 1;
-}
-
-/*
- * rb_check_preorder
- *
- * return 0 if there exists allocated block in Red-black tree, 1 otherwise.
- */
-static int rb_check_preorder(){
-    if(RB_LEFT(rb_root) != rb_null){
-        return rb_check_preorder_impl(RB_LEFT(rb_root));
-    }
-    return 1;
-}
-
-/*
- * mm_check - heap consistency checker. return 0 if something is wrong, 1 otherwise.
- */
-int mm_check(void)
-{
-    void *cur, *end;
-
-    if(!rb_check_preorder()){
-        return 0;
-    }
-
-    cur = mem_heap_lo() + MIN_BLOCK_SIZE;
-    end = mem_heap_hi() - 3;
-    while(cur < end){
-        if(CUR_FREE(cur)){ // cur is free block
-            if(PREV_FREE(cur)){ // contiguous free block
-                printf("%p, %p are consecutive, but both are free.\n",
-                        PREV_BLOCK(cur, CUR_SIZE_MASKED(cur)), cur);
-                return 0;
-            }
-            if(IS_IN_RB(cur) && !rb_find_exact(cur)){ // cur is not in Red-black tree
-                printf("%p is free block, but is not in Red-black tree.\n", cur);
-                return 0;
-            }
-        }else{ // cur is allocated block
-        }
-        cur = NEXT_BLOCK(cur, CUR_SIZE_MASKED(cur));
-    }
-    return 1;
-}
-
-/*
  * mm_malloc - Allocate a block
  *
  * If there exists a free block where the request fits, get the smallest one, segment it and allocate.
@@ -551,20 +462,6 @@ void* mm_malloc(size_t size)
         }
     }
     CUR_SIZE(free_block) = PREV_SIZE(NEXT_BLOCK(free_block, block_size)) = block_size;
-
-#ifdef DEBUG
-    printf("mm_malloc(%u) called\n", size);
-    printf("free_block = %p\n", free_block);
-    rb_print_preorder();
-    printf("\n");
-#endif /* DEBUG */
-
-#ifdef CHECK
-    if(!mm_check()){
-        rb_print_preorder();
-        exit(0);
-    }
-#endif /* CHECK */
 
     return USER_BLOCK(free_block);
 }
@@ -615,21 +512,6 @@ void mm_free(void *ptr)
     if(IS_IN_RB(new_block)){
         rb_insert(new_block);
     }
-    
-#ifdef DEBUG
-    printf("mm_free(%p) called\n", ptr);
-    printf("new_block = %p\n", new_block);
-    rb_print_preorder();
-    printf("\n");
-#endif /* DEBUG */
-
-#ifdef CHECK
-    if(!mm_check()){
-        rb_print_preorder();
-        exit(0);
-    }
-#endif /* CHECK */
-
 }
 
 /*
